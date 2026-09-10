@@ -147,3 +147,37 @@ ipcMain.handle('download-model', async (event, url, filename) => {
     fileStream.close();
   }
 });
+
+let llamaEngine: any = null;
+let aiModel: any = null;
+let aiContext: any = null;
+
+ipcMain.handle('ask-ai', async (event, filename: string, prompt: string) => {
+  const userDataPath = app.getPath('userData');
+  const modelPath = path.join(userDataPath, filename);
+
+  if (!fs.existsSync(modelPath)) {
+    throw new Error("Model file not found! Download it first.");
+  }
+
+  const { getLlama, LlamaChatSession } = await import('node-llama-cpp');
+
+  if (!llamaEngine) {
+    console.log("Loading model into memory... this takes a few seconds.");
+    llamaEngine = await getLlama();
+    aiModel = await llamaEngine.loadModel({ modelPath });
+    aiContext = await aiModel.createContext();
+  }
+
+  const session = new LlamaChatSession({
+    contextSequence: aiContext.getSequence()
+  });
+
+  const fullResponse = await session.prompt(prompt, {
+    onTextChunk(chunk: string) {
+      event.sender.send('ai-stream-chunk', chunk);
+    }
+  });
+
+  return fullResponse;
+});

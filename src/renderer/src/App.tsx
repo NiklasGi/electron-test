@@ -8,6 +8,15 @@ import { toast, Toaster } from './components/ui/toast';
 function App(): React.JSX.Element {
   const [progress, setProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [aiResponse, setAiResponse] = useState('');
+
+  useEffect(() => {
+    // Listen for streaming words from the AI
+    const cleanup = (window as any).api.onAiStream((chunk: string) => {
+      setAiResponse((prev) => prev + chunk);
+    });
+    return cleanup;
+  }, []);
 
   useEffect(() => {
     const cleanup = (window as any).api.onDownloadProgress((data) => {
@@ -18,8 +27,6 @@ function App(): React.JSX.Element {
     return cleanup;
   }, []);
 
-
-
   useEffect(() => {
     if (progress === 100) {
       setIsDownloading(false);
@@ -27,6 +34,10 @@ function App(): React.JSX.Element {
     }
   }, [progress]);
 
+  const sayHello = async () => {
+    console.log("Hello from the renderer!");
+    await (window as any).api.askAi("qwen-7b.gguf", "Hello there!");
+  }
 
   const showToast = (message: string) => {
     toast.add({
@@ -52,7 +63,7 @@ function App(): React.JSX.Element {
     setProgress(0);
 
     try {
-            showToast("Download started");
+      showToast("Download started");
 
       const url = "https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf";
 
@@ -79,9 +90,13 @@ function App(): React.JSX.Element {
               <Progress value={progress} className="w-full"></Progress>
               <p>Download Progress: {progress}%</p>
             </div>}
+          <div className="flex flex-col mt-4">
+            <p>AI Response: {aiResponse}</p>
+          </div>
+          <Button onClick={sayHello}>Say Hello to AI</Button>
         </div>
       </div>
-      <Toaster/>
+      <Toaster />
     </>
   )
 }

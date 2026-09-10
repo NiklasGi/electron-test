@@ -15,6 +15,15 @@ const api = {
     ipcRenderer.on('download-progress', subscription);
     
     return () => ipcRenderer.removeListener('download-progress', subscription);
+  },
+
+  askAi: (filename: string, prompt: string) => 
+    ipcRenderer.invoke('ask-ai', filename, prompt),
+    
+  onAiStream: (callback: (chunk: string) => void) => {
+    const subscription = (_event: any, chunk: string) => callback(chunk);
+    ipcRenderer.on('ai-stream-chunk', subscription);
+    return () => ipcRenderer.removeListener('ai-stream-chunk', subscription);
   }
 }
 
