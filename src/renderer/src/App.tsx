@@ -1,9 +1,22 @@
 import Versions from './components/Versions'
 import electronLogo from './assets/electron.svg'
 
+
 function App(): React.JSX.Element {
   const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
 
+  async function handlePickAndExtract() {
+    console.log('Opening file picker...')
+    const filePath = await (window as any).api.openFilePicker()
+
+    if (!filePath) {
+      console.log('User canceled file selection')
+      return
+    }
+
+    const extractedText = await (window as any).api.extractPdfText(filePath)
+    console.log('Extracted PDF Content:\n', extractedText)
+  }
   return (
     <>
       <img alt="logo" className="logo" src={electronLogo} />
@@ -22,6 +35,7 @@ function App(): React.JSX.Element {
           </a>
         </div>
         <div className="action">
+          <button onClick={handlePickAndExtract}>Extract PDF Text</button>
           <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
             Send IPC
           </a>

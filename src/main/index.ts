@@ -1,8 +1,9 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-
+import * as fs from 'fs'
+import { PDFParse } from 'pdf-parse'
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -72,3 +73,33 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+ipcMain.handle('extract-pdf-text', async (_event, filePath: string) => {
+  const dataBuffer = fs.readFileSync(filePath)
+  
+  const parser = new PDFParse({ data: dataBuffer })
+  const result = await parser.getText()
+  
+  await parser.destroy()
+
+  return result.text
+})
+
+
+ipcMain.handle('open-file-picker', async () => {
+  // Pass the active window so the picker modal attaches correctly
+  const window = BrowserWindow.getFocusedWindow()
+  
+  const result = await dialog.showOpenDialog(window!, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'PDF Files', extensions: ['pdf'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  })
+
+  // Returns the file path string if chosen, or null if canceled
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0]
+  }
+  return null
+})
