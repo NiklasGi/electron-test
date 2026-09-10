@@ -4,6 +4,8 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import * as fs from 'fs'
 import { PDFParse } from 'pdf-parse'
+import path from 'path'
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -75,10 +77,10 @@ app.on('window-all-closed', () => {
 // code. You can also put them in separate files and require them here.
 ipcMain.handle('extract-pdf-text', async (_event, filePath: string) => {
   const dataBuffer = fs.readFileSync(filePath)
-  
+
   const parser = new PDFParse({ data: dataBuffer })
   const result = await parser.getText()
-  
+
   await parser.destroy()
 
   return result.text
@@ -88,7 +90,7 @@ ipcMain.handle('extract-pdf-text', async (_event, filePath: string) => {
 ipcMain.handle('open-file-picker', async () => {
   // Pass the active window so the picker modal attaches correctly
   const window = BrowserWindow.getFocusedWindow()
-  
+
   const result = await dialog.showOpenDialog(window!, {
     properties: ['openFile'],
     filters: [
@@ -103,3 +105,45 @@ ipcMain.handle('open-file-picker', async () => {
   }
   return null
 })
+
+ipcMain.handle('download-model', async (event, url, filename) => {
+  const userDataPath = app.getPath('userData');
+  const filePath = path.join(userDataPath, filename);
+  const fileStream = fs.createWriteStream(filePath);
+
+  try {
+    const response = await fetch(url);
+    const totalSize = parseInt(response.headers.get('content-length') || '0', 10);
+
+    let downloaded = 0;
+
+    if (!response.body) return;
+
+    let lastPercentage = 0;
+    for await (const chunk of response.body) {
+      fileStream.write(chunk);
+      downloaded += chunk.length;
+
+      const percentage = Math.min(Math.floor((downloaded / totalSize) * 100), 100);
+
+      if (percentage > lastPercentage) {
+        lastPercentage = percentage;
+        event.sender.send('download-progress', {
+          downloaded,
+          total: totalSize,
+          percentage
+        });
+      }
+    }
+
+    fileStream.end();
+    return filePath;
+
+  } catch (error) {
+    fs.unlinkSync(filePath); // Delete the partially downloaded file
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Download failed: ${message}`);
+  } finally {
+    fileStream.close();
+  }
+});
