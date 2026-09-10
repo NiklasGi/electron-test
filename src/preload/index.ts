@@ -24,7 +24,9 @@ const api = {
     const subscription = (_event: any, chunk: string) => callback(chunk);
     ipcRenderer.on('ai-stream-chunk', subscription);
     return () => ipcRenderer.removeListener('ai-stream-chunk', subscription);
-  }
+  },
+
+  unloadModel: (): Promise<boolean> => ipcRenderer.invoke('unload-model')
 }
 
 if (process.contextIsolated) {

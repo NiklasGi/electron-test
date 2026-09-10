@@ -67,7 +67,8 @@ app.whenReady().then(() => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
+  await freeAiResources();
   if (process.platform !== 'darwin') {
     app.quit()
   }
@@ -202,3 +203,30 @@ ipcMain.handle('ask-ai', async (event, filename: string, userPrompt: string) => 
 
   return structuredData;
 });
+
+ipcMain.handle('unload-model', async () => {
+  await freeAiResources();
+  return true;
+});
+
+async function freeAiResources() {
+  console.log("Freeing AI memory...");
+
+  if (aiContext) {
+    await aiContext.dispose();
+    aiContext = null;
+  }
+  
+  if (aiModel) {
+    await aiModel.dispose();
+    aiModel = null;
+  }
+  
+
+  if (llamaEngine) {
+    await llamaEngine.dispose();
+    llamaEngine = null;
+  }
+
+  console.log("Resouces allocated to ai are finally free again :')!");
+}
