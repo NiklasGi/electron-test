@@ -5,6 +5,9 @@ import icon from '../../resources/icon.png?asset'
 import * as fs from 'fs'
 import { PDFParse } from 'pdf-parse'
 import path from 'path'
+import { IpcEvents } from '../shared/constants'
+
+
 
 function createWindow(): void {
   // Create the browser window.
@@ -193,7 +196,7 @@ ipcMain.handle('ask-ai', async (event, filename: string, userPrompt: string) => 
     grammar, // locks the output structure
     temperature: 0.1, // should be low for accurate data extraction
 
-    //Disabled stream for structured output
+    // Disabled stream for structured output
     // onTextChunk(chunk: string) {
     //   event.sender.send('ai-stream-chunk', chunk);
     // }
@@ -204,7 +207,7 @@ ipcMain.handle('ask-ai', async (event, filename: string, userPrompt: string) => 
   return structuredData;
 });
 
-ipcMain.handle('unload-model', async () => {
+ipcMain.handle(IpcEvents.UNLOAD_MODEL, async () => {
   await freeAiResources();
   return true;
 });
