@@ -1,5 +1,6 @@
 import Versions from './components/Versions'
 import electronLogo from './assets/electron.svg'
+import { Button } from './components/ui/button'
 
 
 function App(): React.JSX.Element {
@@ -35,7 +36,7 @@ function App(): React.JSX.Element {
           </a>
         </div>
         <div className="action">
-          <button onClick={handlePickAndExtract}>Extract PDF Text</button>
+          <Button onClick={handlePickAndExtract}>Extract PDF Text</Button>
           <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
             Send IPC
           </a>
