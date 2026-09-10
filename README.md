@@ -1,6 +1,6 @@
 # electron-test
 
-An Electron application with React and TypeScript
+An Electron application with React and TypeScript. Exists mostly for me to test some stuff and play around, therefore the code is a bit messy ¯\\\_(ツ)_/¯.
 
 ## Recommended IDE Setup
 
