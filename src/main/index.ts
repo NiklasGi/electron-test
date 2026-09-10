@@ -152,7 +152,7 @@ let llamaEngine: any = null;
 let aiModel: any = null;
 let aiContext: any = null;
 
-ipcMain.handle('ask-ai', async (event, filename: string, prompt: string) => {
+ipcMain.handle('ask-ai', async (event, filename: string, userPrompt: string) => {
   const userDataPath = app.getPath('userData');
   const modelPath = path.join(userDataPath, filename);
 
@@ -173,11 +173,32 @@ ipcMain.handle('ask-ai', async (event, filename: string, prompt: string) => {
     contextSequence: aiContext.getSequence()
   });
 
-  const fullResponse = await session.prompt(prompt, {
-    onTextChunk(chunk: string) {
-      event.sender.send('ai-stream-chunk', chunk);
-    }
+  const responseSchema = {
+    type: "object",
+    properties: {
+      english: { type: "string" },
+      german : { type: "string" },
+      spanish: { type: "string" },
+
+    },
+    required: ["english", "german", "spanish"]
+  };
+
+  const prompt = `Create a json response with an English, German, and Spanish translation.`;
+
+  const grammar = await llamaEngine.createGrammarForJsonSchema(responseSchema);
+
+  const rawResponse = await session.prompt(prompt, {
+    grammar, // locks the output structure
+    temperature: 0.1, // should be low for accurate data extraction
+
+    //Disabled stream for structured output
+    // onTextChunk(chunk: string) {
+    //   event.sender.send('ai-stream-chunk', chunk);
+    // }
   });
 
-  return fullResponse;
+  const structuredData = grammar.parse(rawResponse);
+
+  return structuredData;
 });

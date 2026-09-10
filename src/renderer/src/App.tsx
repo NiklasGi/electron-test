@@ -36,7 +36,8 @@ function App(): React.JSX.Element {
 
   const sayHello = async () => {
     console.log("Hello from the renderer!");
-    await (window as any).api.askAi("qwen-7b.gguf", "Hello there!");
+    const response = await (window as any).api.askAi("qwen-7b.gguf", "Hello there!");
+    setAiResponse(JSON.stringify(response, null, 2));
   }
 
   const showToast = (message: string) => {
