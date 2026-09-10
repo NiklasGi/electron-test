@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-const api = {
+export const api = {
   extractPdfText: (filePath: string): Promise<string> => 
     ipcRenderer.invoke('extract-pdf-text', filePath),
     
@@ -14,7 +14,7 @@ const api = {
     const subscription = (_event: any, data: any) => callback(data);
     ipcRenderer.on('download-progress', subscription);
     
-    return () => ipcRenderer.removeListener('download-progress', subscription);
+    return () => {ipcRenderer.removeListener('download-progress', subscription);};
   },
 
   askAi: (filename: string, prompt: string) => 
@@ -23,7 +23,7 @@ const api = {
   onAiStream: (callback: (chunk: string) => void) => {
     const subscription = (_event: any, chunk: string) => callback(chunk);
     ipcRenderer.on('ai-stream-chunk', subscription);
-    return () => ipcRenderer.removeListener('ai-stream-chunk', subscription);
+    return () => {ipcRenderer.removeListener('ai-stream-chunk', subscription);};
   },
 
   unloadModel: (): Promise<boolean> => ipcRenderer.invoke('unload-model')

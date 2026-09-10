@@ -3,6 +3,7 @@ import { Button } from './components/ui/button'
 import { useEffect, useState } from 'react';
 import { Progress } from './components/ui/progress';
 import { toast, Toaster } from './components/ui/toast';
+import { api } from './lib/api';
 
 
 function App(): React.JSX.Element {
@@ -12,14 +13,14 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     // Listen for streaming words from the AI
-    const cleanup = (window as any).api.onAiStream((chunk: string) => {
+    const cleanup = api.onAiStream((chunk: string) => {
       setAiResponse((prev) => prev + chunk);
     });
     return cleanup;
   }, []);
 
   useEffect(() => {
-    const cleanup = (window as any).api.onDownloadProgress((data) => {
+    const cleanup = api.onDownloadProgress((data) => {
       setProgress(data.percentage);
     });
 
@@ -36,7 +37,7 @@ function App(): React.JSX.Element {
 
   const sayHello = async () => {
     console.log("Hello from the renderer!");
-    const response = await (window as any).api.askAi("qwen-7b.gguf", "Hello there!");
+    const response = await api.askAi("qwen-7b.gguf", "Hello there!");
     setAiResponse(JSON.stringify(response, null, 2));
   }
 
@@ -48,14 +49,14 @@ function App(): React.JSX.Element {
 
   async function handlePickAndExtract() {
     console.log('Opening file picker...')
-    const filePath = await (window as any).api.openFilePicker()
+    const filePath = await api.openFilePicker()
 
     if (!filePath) {
       console.log('User canceled file selection')
       return
     }
 
-    const extractedText = await (window as any).api.extractPdfText(filePath)
+    const extractedText = await api.extractPdfText(filePath)
     console.log('Extracted PDF Content:\n', extractedText)
   }
 
@@ -70,7 +71,7 @@ function App(): React.JSX.Element {
 
       // Call the exposed backend function
 
-      await (window as any).api.downloadModel(url, "qwen-7b.gguf");
+      await api.downloadModel(url, "qwen-7b.gguf");
     } catch (error) {
       console.error("Download failed:", error);
       showToast("Download failed");
